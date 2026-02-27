@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 
-export default function Sidebar() {
+export default function Sidebar(closeSidebar) {
 
     const linkClass = ({ isActive }) =>
         `p-2 rounded cursor-pointer block transition ${isActive
@@ -18,37 +18,37 @@ export default function Sidebar() {
             <ul className="space-y-3">
 
                 <li>
-                    <NavLink to="/" className={linkClass}>
+                    <NavLink to="/" className={linkClass} onClick={closeSidebar}>
                         Dashboard
                     </NavLink>
                 </li>
 
                 <li>
-                    <NavLink to="/products" className={linkClass}>
+                    <NavLink to="/products" className={linkClass} onClick={closeSidebar}>
                         المنتجات
                     </NavLink>
                 </li>
 
                 <li>
-                    <NavLink to="/invoices" className={linkClass}>
+                    <NavLink to="/invoices" className={linkClass} onClick={closeSidebar}>
                         الفواتير
                     </NavLink>
                 </li>
 
                 <li>
-                    <NavLink to="/customers" className={linkClass}>
+                    <NavLink to="/customers" className={linkClass} onClick={closeSidebar}>
                         العملاء
                     </NavLink>
                 </li>
 
                 <li>
-                    <NavLink to="/allinvoices" className={linkClass}>
+                    <NavLink to="/allinvoices" className={linkClass} onClick={closeSidebar}>
                         كل الفواتير
                     </NavLink>
                 </li>
 
                 <li>
-                    <NavLink to="/statment" className={linkClass}>
+                    <NavLink to="/statment" className={linkClass} onClick={closeSidebar}>
                         كشف الحسابات
                     </NavLink>
                 </li>

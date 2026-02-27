@@ -13,9 +13,10 @@ import Statement from "./pages/Statement";
 export default function App() {
 
   const [cart, setCart] = useState([]);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    initializeProducts(); // 🔥 تحميل الداتا الافتراضية أول مرة
+    initializeProducts();
   }, []);
 
   const addToCart = (product) => {
@@ -41,22 +42,53 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div className="flex">
+      <div className="flex min-h-screen bg-gray-100 overflow-x-hidden">
 
-        <Sidebar />
+        <div
+          className={`
+            fixed inset-y-0 right-0 z-50 w-64 bg-blue-900 text-white transform
+            ${isOpen ? "translate-x-0" : "translate-x-full"}
+            transition-transform duration-300
+            lg:static lg:translate-x-0
+          `}
+        >
+          <Sidebar closeSidebar={() => setIsOpen(false)} />
+        </div>
 
-        <div className="flex-1 p-6">
-          <Routes>
+        {isOpen && (
+          <div
+            className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+            onClick={() => setIsOpen(false)}
+          />
+        )}
 
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/products" element={<Products addToCart={addToCart} />} />
-            <Route path="/invoices" element={<Invoices cart={cart} setCart={setCart} />} />
-            <Route path="/customers" element={<Customers />} />
-            <Route path="/allinvoices" element={<AllInvoices />} />
-            <Route path="/statment" element={<Statement />} />
+        <div className="flex-1 min-w-0 flex flex-col">
 
-          </Routes>
+          <div className="lg:hidden bg-white shadow p-4 flex items-center justify-between">
+            <button
+              onClick={() => setIsOpen(true)}
+              className="text-blue-900 text-2xl"
+            >
+              ☰
+            </button>
+
+            <h1 className="font-bold text-blue-900">
+              POS System
+            </h1>
+          </div>
+
+          <div className="flex-1 p-4 md:p-6">
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/products" element={<Products addToCart={addToCart} />} />
+              <Route path="/invoices" element={<Invoices cart={cart} setCart={setCart} />} />
+              <Route path="/customers" element={<Customers />} />
+              <Route path="/allinvoices" element={<AllInvoices />} />
+              <Route path="/statment" element={<Statement />} />
+            </Routes>
+          </div>
+
         </div>
 
       </div>

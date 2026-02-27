@@ -109,102 +109,104 @@ export default function Dashboard() {
   return (<>
     <Navbar />
 
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+      <div className="w-full max-w-375 mx-auto px-4 md:px-6 py-6 space-y-6">
 
-      <motion.div
-        initial={{ opacity: 0, y: -30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="bg-linear-to-r from-blue-900 to-blue-600 text-white p-6 rounded-2xl shadow-lg"
-      >
-        <h1 className="text-xl md:text-2xl font-bold">
-          لوحة التحكم
-        </h1>
-        <p className="opacity-80 text-sm md:text-base mt-2">
-          ملخص شامل لحالة النظام
-        </p>
-      </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: -30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="bg-linear-to-r from-blue-900 to-blue-600 text-white p-6 rounded-2xl shadow-lg"
+        >
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold">
+            لوحة التحكم
+          </h1>
+          <p className="opacity-80 text-xs sm:text-sm md:text-base mt-2">
+            ملخص شامل لحالة النظام
+          </p>
+        </motion.div>
 
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="grid gap-4
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid gap-4
                      grid-cols-1
                      sm:grid-cols-2
                      lg:grid-cols-3
                      xl:grid-cols-6"
-      >
-        <StatCard title="إجمالي المبيعات" value={stats.totalSales} />
-        <StatCard title="صافي الربح" value={stats.totalProfit} />
-        <StatCard title="مبيعات اليوم" value={stats.todaySales} />
-        <StatCard title="عدد الفواتير" value={stats.invoices} />
-        <StatCard title="عدد المنتجات" value={stats.products} />
-        <StatCard title="عدد العملاء" value={stats.customers} />
-      </motion.div>
-
-      {/* Low Stock */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        className="bg-white rounded-2xl shadow p-4 md:p-6 overflow-x-auto"
-      >
-        <h2 className="text-lg font-bold mb-4 text-blue-900">
-          المنتجات منخفضة المخزون
-        </h2>
-
-        <table className="w-full min-w-100 text-sm md:text-base">
-          <thead>
-            <tr className="border-b text-gray-500">
-              <th className="py-2 text-right">المنتج</th>
-              <th className="py-2 text-right">الكمية</th>
-            </tr>
-          </thead>
-          <tbody>
-            {lowStockProducts.length === 0 ? (
-              <tr>
-                <td colSpan="2" className="text-center py-4 text-gray-400">
-                  لا يوجد منتجات منخفضة المخزون
-                </td>
-              </tr>
-            ) : (
-              lowStockProducts.map(product => (
-                <tr key={product.id} className="border-b">
-                  <td className="py-2">{product.name}</td>
-                  <td className="py-2 text-red-600 font-semibold">
-                    {product.quantity}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </motion.div>
-
-      {/* Chart */}
-      {chartData && (
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="bg-white p-4 md:p-6 rounded-2xl shadow"
         >
-          <h2 className="text-lg font-bold text-blue-900 mb-4">
-            الرسم البياني للمبيعات
+          <StatCard title="إجمالي المبيعات" value={stats.totalSales} />
+          <StatCard title="صافي الربح" value={stats.totalProfit} />
+          <StatCard title="مبيعات اليوم" value={stats.todaySales} />
+          <StatCard title="عدد الفواتير" value={stats.invoices} />
+          <StatCard title="عدد المنتجات" value={stats.products} />
+          <StatCard title="عدد العملاء" value={stats.customers} />
+        </motion.div>
+
+        {/* Low Stock */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white rounded-2xl shadow p-4 md:p-6 overflow-x-auto"
+        >
+          <h2 className="text-lg font-bold mb-4 text-blue-900">
+            المنتجات منخفضة المخزون
           </h2>
 
-          <div className="h-75 md:h-100">
-            <Bar
-              data={chartData}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false
-              }}
-            />
-          </div>
+          <table className="w-full min-w-100 text-sm md:text-base">
+            <thead>
+              <tr className="border-b text-gray-500">
+                <th className="py-2 text-right">المنتج</th>
+                <th className="py-2 text-right">الكمية</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lowStockProducts.length === 0 ? (
+                <tr>
+                  <td colSpan="2" className="text-center py-4 text-gray-400">
+                    لا يوجد منتجات منخفضة المخزون
+                  </td>
+                </tr>
+              ) : (
+                lowStockProducts.map(product => (
+                  <tr key={product.id} className="border-b">
+                    <td className="py-2">{product.name}</td>
+                    <td className="py-2 text-red-600 font-semibold">
+                      {product.quantity}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </motion.div>
-      )}
+
+        {/* Chart */}
+        {chartData && (
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="bg-white p-4 md:p-6 rounded-2xl shadow"
+          >
+            <h2 className="text-lg font-bold text-blue-900 mb-4">
+              الرسم البياني للمبيعات
+            </h2>
+
+            <div className="h-62.5 sm:h-75 md:h-100">
+              <Bar
+                data={chartData}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false
+                }}
+              />
+            </div>
+          </motion.div>
+        )}
+      </div>
     </div>
   </>
   );
@@ -214,11 +216,14 @@ function StatCard({ title, value }) {
   return (
     <motion.div
       variants={cardVariants}
-      whileHover={{ scale: 1.05 }}
-      className="bg-white rounded-2xl shadow-md p-4 transition-all"
+      whileHover={{ scale: 1.03 }}
+      className="bg-white rounded-2xl shadow-md p-4 sm:p-5 transition-all"
     >
-      <p className="text-gray-500 text-sm mb-1">{title}</p>
-      <h3 className="text-xl font-bold text-blue-900">
+      <p className="text-gray-500 text-xs sm:text-sm mb-1 truncate">
+        {title}
+      </p>
+
+      <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-blue-900 wrap-break-word">
         {value.toLocaleString()} جنيه
       </h3>
     </motion.div>
