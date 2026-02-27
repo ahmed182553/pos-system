@@ -12,6 +12,7 @@ import {
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
 import Navbar from "../components/Navbar";
+import { addPayment } from "../services/paymentService";
 
 ChartJS.register(
   CategoryScale,
@@ -41,6 +42,13 @@ const cardVariants = {
 };
 
 export default function Dashboard() {
+  const [customers, setCustomers] = useState([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [customerId, setCustomerId] = useState("");
+  const [amount, setAmount] = useState("");
+  useEffect(() => {
+    setCustomers(getCustomers());
+  }, []);
   const [chartData, setChartData] = useState(null);
   const [lowStockProducts, setLowStockProducts] = useState([]);
   const [stats, setStats] = useState({
@@ -51,6 +59,41 @@ export default function Dashboard() {
     totalProfit: 0,
     todaySales: 0
   });
+
+  const refreshData = () => {
+    const invoices = getInvoices();
+    const customers = getCustomers();
+
+    const totalSales = invoices.reduce(
+      (sum, inv) => sum + (inv.totalAmount || inv.total || 0),
+      0
+    );
+
+    setStats(prev => ({
+      ...prev,
+      totalSales,
+      customers: customers.length,
+      invoices: invoices.length
+    }));
+  };
+
+  const handleSavePayment = () => {
+    if (!customerId || !amount) return;
+
+    addPayment({
+      customerId: Number(customerId),
+      amount: Number(amount),
+    });
+
+    refreshData(); // 👈 مهم
+
+    setIsOpen(false);
+    setCustomerId("");
+    setAmount("");
+
+    alert("تم إضافة الدفعة بنجاح");
+  };
+
 
   useEffect(() => {
     const products = getProducts();
@@ -107,7 +150,53 @@ export default function Dashboard() {
   }, []);
 
   return (<>
-    <Navbar />
+    <Navbar onAddPayment={() => setIsOpen(true)} />
+    {isOpen && (
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="bg-white w-[90%] max-w-md p-6 rounded-2xl">
+
+          <h2 className="text-lg font-bold mb-4">إضافة دفعة</h2>
+
+          <select
+            value={customerId}
+            onChange={(e) => setCustomerId(e.target.value)}
+            className="w-full border p-2 rounded mb-3"
+          >
+            <option value="">اختر عميل</option>
+            {customers.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+
+          <input
+            type="number"
+            placeholder="المبلغ"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className="w-full border p-2 rounded mb-4"
+          />
+
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setIsOpen(false)}
+              className="px-4 py-2 bg-gray-300 rounded"
+            >
+              إلغاء
+            </button>
+
+            <button
+              onClick={handleSavePayment}
+              className="px-4 py-2 bg-green-600 text-white rounded"
+            >
+              حفظ
+            </button>
+          </div>
+
+        </div>
+      </div>
+    )}
 
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <div className="w-full max-w-375 mx-auto px-4 md:px-6 py-6 space-y-6">
@@ -139,9 +228,9 @@ export default function Dashboard() {
           <StatCard title="إجمالي المبيعات" value={stats.totalSales} />
           <StatCard title="صافي الربح" value={stats.totalProfit} />
           <StatCard title="مبيعات اليوم" value={stats.todaySales} />
-          <StatCard title="عدد الفواتير" value={stats.invoices} />
-          <StatCard title="عدد المنتجات" value={stats.products} />
-          <StatCard title="عدد العملاء" value={stats.customers} />
+          <StatCard title="عدد الفواتير" value={stats.invoices} isMoney={false} />
+          <StatCard title="عدد المنتجات" value={stats.products} isMoney={false} />
+          <StatCard title="عدد العملاء" value={stats.customers} isMoney={false} />
         </motion.div>
 
         {/* Low Stock */}
@@ -212,7 +301,7 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ title, value }) {
+function StatCard({ title, value, isMoney = true }) {
   return (
     <motion.div
       variants={cardVariants}
@@ -223,8 +312,8 @@ function StatCard({ title, value }) {
         {title}
       </p>
 
-      <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-blue-900 wrap-break-word">
-        {value.toLocaleString()} جنيه
+      <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-blue-900">
+        {value.toLocaleString()} {isMoney && "جنيه"}
       </h3>
     </motion.div>
   );

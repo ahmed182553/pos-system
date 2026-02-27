@@ -1,18 +1,30 @@
 @import "tailwindcss";
 @media print {
-  body * {
-    visibility: hidden;
+  body {
+    background: white !important;
   }
 
-  .invoice-print,
-  .invoice-print * {
-    visibility: visible;
+  .print-container {
+    display: block !important;
   }
 
-  .invoice-print {
-    position: absolute;
-    left: 0;
-    top: 0;
+  table {
     width: 100%;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    border: 1px solid #000;
+    padding: 8px;
+  }
+}
+@media print {
+  body {
+    background: white !important;
+  }
+
+  .no-print {
+    display: none !important;
   }
 }

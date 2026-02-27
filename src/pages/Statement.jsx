@@ -1,11 +1,30 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getCustomers } from "../services/customerService";
+import { useReactToPrint } from "react-to-print";
 
 export default function Statement() {
-
     const [customers, setCustomers] = useState([]);
     const [selectedCustomerId, setSelectedCustomerId] = useState("");
     const [transactions, setTransactions] = useState([]);
+    const printRef = useRef(null);
+
+    const selectedCustomer = customers.find(
+        c => c.id === Number(selectedCustomerId)
+    );
+
+    const handlePrint = useReactToPrint({
+        contentRef: printRef,
+        documentTitle: "كشف حساب",
+        pageStyle: `
+    @page {
+      size: 80mm auto;
+      margin: 0;
+    }
+    body {
+      -webkit-print-color-adjust: exact;
+    }
+  `
+    });
 
     useEffect(() => {
         setCustomers(getCustomers());
@@ -23,6 +42,7 @@ export default function Statement() {
         const customerInvoices = invoices
             .filter(inv => inv.customerId === Number(selectedCustomerId))
             .map(inv => ({
+                rawDate: inv.date,
                 date: new Date(inv.date).toLocaleString("ar-EG"),
                 description: "فاتورة",
                 debit: inv.total,
@@ -32,6 +52,7 @@ export default function Statement() {
         const customerPayments = payments
             .filter(pay => pay.customerId === Number(selectedCustomerId))
             .map(pay => ({
+                rawDate: pay.date,
                 date: new Date(pay.date).toLocaleString("ar-EG"),
                 description: "دفعة",
                 debit: 0,
@@ -41,13 +62,21 @@ export default function Statement() {
         const allTransactions =
             [...customerInvoices, ...customerPayments]
                 .sort((a, b) =>
-                    new Date(a.date) - new Date(b.date)
+                    new Date(a.rawDate) - new Date(b.rawDate)
                 );
 
-        // حساب الرصيد التراكمي
         let balance = 0;
+
         const withBalance = allTransactions.map(t => {
-            balance = balance + t.debit - t.credit;
+
+            if (t.description === "فاتورة") {
+                balance += t.debit;
+            }
+
+            if (t.description === "دفعة") {
+                balance -= t.credit;
+            }
+
             return { ...t, balance };
         });
 
@@ -74,10 +103,7 @@ export default function Statement() {
                     setSelectedCustomerId(e.target.value)
                 }
             >
-                <option value="">
-                    اختر عميل
-                </option>
-
+                <option value="">اختر عميل</option>
                 {customers.map(c => (
                     <option key={c.id} value={c.id}>
                         {c.name}
@@ -85,29 +111,66 @@ export default function Statement() {
                 ))}
             </select>
 
+            {selectedCustomerId && (
+                <button
+                    onClick={handlePrint}
+                    className="no-print mb-4 bg-blue-600 text-white px-4 py-2 rounded-lg"
+                >
+                    طباعة كشف الحساب
+                </button>
+            )}
+
             {transactions.length > 0 && (
+                <div
+                    ref={printRef}
+                    className="print-container bg-white p-6"
+                >
 
-                <div className="bg-white rounded-xl shadow p-4 overflow-x-auto">
+                    {/* Header الطباعة */}
+                    <div className="text-center mb-6">
+                        <h2 className="text-xl font-bold">
+                            كشف حساب عميل
+                        </h2>
+                        <p className="mt-2">
+                            اسم العميل: {selectedCustomer?.name}
+                        </p>
+                        <p>
+                            تاريخ الطباعة:{" "}
+                            {new Date().toLocaleDateString("ar-EG")}
+                        </p>
+                    </div>
 
-                    <table className="w-full text-right">
+                    <table className="w-full text-right text-[11px] border-collapse">
                         <thead>
-                            <tr className="border-b font-bold">
-                                <th>التاريخ</th>
-                                <th>البيان</th>
-                                <th>مدين</th>
-                                <th>دائن</th>
-                                <th>الرصيد</th>
+                            <tr className="border-b font-bold bg-gray-100">
+                                <th className="p-2">التاريخ</th>
+                                <th className="p-2">البيان</th>
+                                <th className="p-2">مدين</th>
+                                <th className="p-2">دائن</th>
+                                <th className="p-2">الرصيد</th>
                             </tr>
                         </thead>
 
                         <tbody>
                             {transactions.map((t, i) => (
-                                <tr key={i} className="border-b">
-                                    <td>{t.date}</td>
-                                    <td>{t.description}</td>
-                                    <td>{t.debit || "-"}</td>
-                                    <td>{t.credit || "-"}</td>
-                                    <td className="font-bold">
+                                <tr key={i} className="border-b text-center">
+                                    <td className="p-2">{t.date}</td>
+                                    <td className="p-2">{t.description}</td>
+                                    <td className="p-2">
+                                        {t.debit || "-"}
+                                    </td>
+                                    <td className="p-2">
+                                        {t.credit || "-"}
+                                    </td>
+
+                                    <td
+                                        className={`p-2 font-bold ${t.balance > 0
+                                            ? "text-red-600"
+                                            : t.balance < 0
+                                                ? "text-green-600"
+                                                : ""
+                                            }`}
+                                    >
                                         {t.balance}
                                     </td>
                                 </tr>
@@ -115,10 +178,20 @@ export default function Statement() {
                         </tbody>
                     </table>
 
-                    <div className="mt-4 font-bold">
-                        الرصيد النهائي:
-                        {Math.abs(finalBalance)} جنيه
-                        {finalBalance > 0 ? " (مدين)" : finalBalance < 0 ? " (دائن)" : ""}
+                    <div
+                        className={`mt-6 font-bold text-lg text-center ${finalBalance > 0
+                            ? "text-red-600"
+                            : finalBalance < 0
+                                ? "text-green-600"
+                                : ""
+                            }`}
+                    >
+                        الرصيد النهائي: {finalBalance} جنيه{" "}
+                        {finalBalance > 0
+                            ? "(العميل عليه)"
+                            : finalBalance < 0
+                                ? "(العميل له)"
+                                : ""}
                     </div>
 
                 </div>
