@@ -141,6 +141,41 @@ export default function Invoices() {
             return;
         }
 
+        const customers = getCustomers();
+        const customer = customers.find(c => c.id === selectedCustomer);
+
+        if (!customer) {
+            alert("العميل غير موجود");
+            return;
+        }
+
+        const allInvoices =
+            JSON.parse(localStorage.getItem("invoices")) || [];
+
+        const payments =
+            JSON.parse(localStorage.getItem("payments")) || [];
+
+        let previousBalance = 0;
+
+        previousBalance += Number(customer.previousBalance || 0);
+
+        allInvoices.forEach(inv => {
+
+            if (inv.customerId === selectedCustomer) {
+
+                const invoicePayments = payments.filter(
+                    p => p.invoiceId === inv.id
+                );
+
+                const paid = invoicePayments.reduce(
+                    (sum, p) => sum + p.amount,
+                    0
+                );
+
+                previousBalance += (inv.total - paid);
+            }
+        });
+
         // 1️⃣ خصم الكميات من المخزون
         const updatedProducts = products.map(product => {
 
@@ -158,12 +193,20 @@ export default function Invoices() {
 
         localStorage.setItem("products", JSON.stringify(updatedProducts));
 
-        // 2️⃣ إنشاء الفاتورة باستخدام service
-        addInvoice({
+        // 2️⃣ إنشاء الفاتورة كاملة بالرصيد السابق
+        const newInvoice = {
+            id: Date.now(),
             customerId: selectedCustomer,
+            customerName: customer.name,
+            date: new Date().toISOString(),
             items: cart,
-            total: totalAmount
-        });
+            total: totalAmount,
+            previousBalance: previousBalance
+        };
+
+        const updatedInvoices = [...allInvoices, newInvoice];
+
+        localStorage.setItem("invoices", JSON.stringify(updatedInvoices));
 
         // 3️⃣ تحديث المنتجات
         window.dispatchEvent(new Event("productsUpdated"));
@@ -175,7 +218,6 @@ export default function Invoices() {
 
         alert("تمت عملية البيع وحفظ الفاتورة بنجاح ✅");
     };
-
     return (
         <div className="p-6 md:p-8 bg-gray-50 min-h-screen grid lg:grid-cols-2 gap-8">
 
@@ -183,7 +225,7 @@ export default function Invoices() {
                 <h2 className="text-xl font-bold mb-4">
                     المنتجات
                 </h2>
-            
+
 
                 <input
                     type="text"

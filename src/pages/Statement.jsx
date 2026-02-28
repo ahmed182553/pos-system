@@ -16,14 +16,14 @@ export default function Statement() {
         contentRef: printRef,
         documentTitle: "كشف حساب",
         pageStyle: `
-    @page {
-      size: 80mm auto;
-      margin: 0;
-    }
-    body {
-      -webkit-print-color-adjust: exact;
-    }
-  `
+        @page {
+          size: 80mm auto;
+          margin: 0;
+        }
+        body {
+          -webkit-print-color-adjust: exact;
+        }
+      `
     });
 
     useEffect(() => {
@@ -38,6 +38,12 @@ export default function Statement() {
 
         const payments =
             JSON.parse(localStorage.getItem("payments")) || [];
+
+        const customer = customers.find(
+            c => c.id === Number(selectedCustomerId)
+        );
+
+        const previousBalance = customer?.previousBalance || 0;
 
         const customerInvoices = invoices
             .filter(inv => inv.customerId === Number(selectedCustomerId))
@@ -59,8 +65,20 @@ export default function Statement() {
                 credit: pay.amount
             }));
 
+        // ✅ إضافة الرصيد السابق كأول معاملة
+        const openingTransaction =
+            previousBalance !== 0
+                ? [{
+                    rawDate: "1900-01-01",
+                    date: "رصيد سابق",
+                    description: "رصيد سابق",
+                    debit: previousBalance > 0 ? previousBalance : 0,
+                    credit: previousBalance < 0 ? Math.abs(previousBalance) : 0
+                }]
+                : [];
+
         const allTransactions =
-            [...customerInvoices, ...customerPayments]
+            [...openingTransaction, ...customerInvoices, ...customerPayments]
                 .sort((a, b) =>
                     new Date(a.rawDate) - new Date(b.rawDate)
                 );
@@ -69,20 +87,15 @@ export default function Statement() {
 
         const withBalance = allTransactions.map(t => {
 
-            if (t.description === "فاتورة") {
-                balance += t.debit;
-            }
-
-            if (t.description === "دفعة") {
-                balance -= t.credit;
-            }
+            balance += t.debit;
+            balance -= t.credit;
 
             return { ...t, balance };
         });
 
         setTransactions(withBalance);
 
-    }, [selectedCustomerId]);
+    }, [selectedCustomerId, customers]);
 
     const finalBalance =
         transactions.length > 0
@@ -126,7 +139,6 @@ export default function Statement() {
                     className="print-container bg-white p-6"
                 >
 
-                    {/* Header الطباعة */}
                     <div className="text-center mb-6">
                         <h2 className="text-xl font-bold">
                             كشف حساب عميل
@@ -165,10 +177,10 @@ export default function Statement() {
 
                                     <td
                                         className={`p-2 font-bold ${t.balance > 0
-                                            ? "text-red-600"
-                                            : t.balance < 0
-                                                ? "text-green-600"
-                                                : ""
+                                                ? "text-red-600"
+                                                : t.balance < 0
+                                                    ? "text-green-600"
+                                                    : ""
                                             }`}
                                     >
                                         {t.balance}
@@ -180,10 +192,10 @@ export default function Statement() {
 
                     <div
                         className={`mt-6 font-bold text-lg text-center ${finalBalance > 0
-                            ? "text-red-600"
-                            : finalBalance < 0
-                                ? "text-green-600"
-                                : ""
+                                ? "text-red-600"
+                                : finalBalance < 0
+                                    ? "text-green-600"
+                                    : ""
                             }`}
                     >
                         الرصيد النهائي: {finalBalance} جنيه{" "}

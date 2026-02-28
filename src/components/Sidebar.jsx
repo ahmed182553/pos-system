@@ -52,7 +52,12 @@ export default function Sidebar(closeSidebar) {
                         كشف الحسابات
                     </NavLink>
                 </li>
-
+                
+                <li>
+                    <NavLink to="/reports" className={linkClass} onClick={closeSidebar}>
+                        التقارير والجرد
+                    </NavLink>
+                </li>
             </ul>
 
         </div>

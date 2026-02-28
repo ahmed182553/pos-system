@@ -1,143 +1,339 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 export default function AllInvoices() {
 
     const [invoices, setInvoices] = useState([]);
     const [search, setSearch] = useState("");
+    const [fromDate, setFromDate] = useState("");
+    const [toDate, setToDate] = useState("");
 
-    // تحميل الفواتير
     useEffect(() => {
         loadInvoices();
-
-        // سماع أي تحديث
-        const handleUpdate = () => {
-            loadInvoices();
-        };
-
-        window.addEventListener("productsUpdated", handleUpdate);
-
-        return () => {
-            window.removeEventListener("productsUpdated", handleUpdate);
-        };
-
+        window.addEventListener("productsUpdated", loadInvoices);
+        return () =>
+            window.removeEventListener("productsUpdated", loadInvoices);
     }, []);
 
     const loadInvoices = () => {
-        const saved =
-            JSON.parse(localStorage.getItem("invoices")) || [];
+        const saved = JSON.parse(localStorage.getItem("invoices")) || [];
 
-        // الأحدث أولاً
-        setInvoices(saved.reverse());
-    };
-
-    // حذف فاتورة
-    const deleteInvoice = (id) => {
-
-        const updated = invoices.filter(inv => inv.id !== id);
-
-        localStorage.setItem(
-            "invoices",
-            JSON.stringify(updated.reverse())
+        const sorted = [...saved].sort(
+            (a, b) => new Date(b.date) - new Date(a.date)
         );
 
-        setInvoices(updated);
+        setInvoices(sorted);
     };
 
-    // فلترة
-    const filteredInvoices = invoices.filter(inv =>
-        inv.id.toString().includes(search)
-    );
+    const deleteInvoice = (id) => {
 
-    // إجمالي المبيعات
-    const totalSales = invoices.reduce(
-        (acc, inv) => acc + inv.total,
-        0
-    );
+        const confirmDelete = window.confirm("هل أنت متأكد من حذف الفاتورة؟");
+
+        if (!confirmDelete) return;
+
+        const original = JSON.parse(localStorage.getItem("invoices")) || [];
+        const updated = original.filter(inv => inv.id !== id);
+
+        localStorage.setItem("invoices", JSON.stringify(updated));
+
+        loadInvoices();
+
+        alert("تم حذف الفاتورة بنجاح");
+    };
+
+    // 🔍 فلترة بالرقم أو الاسم
+    const filteredInvoices = useMemo(() => {
+
+        const customers = JSON.parse(localStorage.getItem("customers")) || [];
+
+        return invoices.filter(inv => {
+
+            const customer = customers.find(c => c.id === inv.customerId);
+            const customerName = customer?.name || inv.customerName || "";
+
+            const matchesSearch =
+                search === "" ||
+                inv.id.toString().includes(search) ||
+                customerName.toLowerCase().includes(search.toLowerCase());
+
+            const invoiceDate = new Date(inv.date);
+
+            const matchesFrom =
+                !fromDate ||
+                invoiceDate >= new Date(fromDate + "T00:00:00");
+
+            const matchesTo =
+                !toDate ||
+                invoiceDate <= new Date(toDate + "T23:59:59");
+
+            return matchesSearch && matchesFrom && matchesTo;
+        });
+
+    }, [invoices, search, fromDate, toDate]);
+
+    // 🧮 الحسابات + حالة الفاتورة
+    const payments = JSON.parse(localStorage.getItem("payments")) || [];
+
+    const getInvoiceData = (invoice) => {
+
+        const allInvoices = JSON.parse(localStorage.getItem("invoices")) || [];
+        const customers = JSON.parse(localStorage.getItem("customers")) || [];
+        const payments = JSON.parse(localStorage.getItem("payments")) || [];
+
+        const customer = customers.find(
+            c => Number(c.id) === Number(invoice.customerId)
+        );
+
+        let previousBalance = Number(customer?.previousBalance || 0);
+
+        // الفواتير الأقدم فقط
+        const olderInvoices = allInvoices.filter(
+            inv =>
+                Number(inv.customerId) === Number(invoice.customerId) &&
+                new Date(inv.date) < new Date(invoice.date)
+        );
+
+        const totalOlderInvoices = olderInvoices.reduce(
+            (sum, inv) => sum + inv.total,
+            0
+        );
+
+        // المدفوعات الخاصة بالفواتير الأقدم فقط
+        const olderPayments = payments.filter(p => {
+
+            const relatedInvoice = olderInvoices.find(
+                inv => inv.id === p.invoiceId
+            );
+
+            return relatedInvoice;
+        });
+
+        const totalOlderPayments = olderPayments.reduce(
+            (sum, p) => sum + p.amount,
+            0
+        );
+
+        previousBalance =
+            previousBalance +
+            totalOlderInvoices -
+            totalOlderPayments;
+
+        // مدفوعات الفاتورة الحالية
+        const invoicePayments = payments.filter(
+            p => p.invoiceId === invoice.id
+        );
+
+        const collected = invoicePayments.reduce(
+            (sum, p) => sum + p.amount,
+            0
+        );
+
+        const remaining =
+            (invoice.total + previousBalance) - collected;
+
+        let status = "غير مدفوعة";
+        let statusColor = "bg-red-100 text-red-700";
+
+        if (remaining <= 0) {
+            status = "مدفوعة";
+            statusColor = "bg-green-100 text-green-700";
+        } else if (collected > 0) {
+            status = "دفع جزئي";
+            statusColor = "bg-yellow-100 text-yellow-700";
+        }
+
+        return {
+            collected,
+            remaining,
+            previousBalance,
+            status,
+            statusColor
+        };
+    };
+
+    // 🖨 طباعة فاتورة واحدة
+    const printSingleInvoice = (invoice) => {
+
+        const data = getInvoiceData(invoice);
+
+        const printWindow = window.open("", "", "width=900,height=700");
+
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>فاتورة رقم ${invoice.id}</title>
+                <style>
+                    body { font-family: Arial; direction: rtl; padding: 20px; }
+                    h2 { text-align: center; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+                    .total { margin-top: 20px; font-weight: bold; font-size: 18px; }
+                </style>
+            </head>
+            <body>
+
+                <h2>فاتورة بيع</h2>
+
+                <p><strong>رقم الفاتورة:</strong> ${invoice.id}</p>
+                <p><strong>العميل:</strong> ${invoice.customerName || "عميل نقدي"}</p>
+                <p><strong>التاريخ:</strong> ${new Date(invoice.date).toLocaleString("ar-EG")}</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الصنف</th>
+                            <th>الكمية</th>
+                            <th>السعر</th>
+                            <th>الإجمالي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${invoice.items.map(item => `
+                            <tr>
+                                <td>${item.name}</td>
+                                <td>${item.quantity}</td>
+                                <td>${item.sellPrice}</td>
+                                <td>${item.sellPrice * item.quantity}</td>
+                            </tr>
+                        `).join("")}
+                    </tbody>
+                </table>
+
+                <div class="total">
+                    إجمالي الفاتورة: ${invoice.total} ج <br/>
+                    الرصيد السابق: ${data.previousBalance} ج <br/>
+                    المحصل: ${data.collected} ج <br/>
+                    المتبقي: ${data.remaining} ج
+                </div>
+
+            </body>
+            </html>
+        `);
+
+        printWindow.document.close();
+        printWindow.print();
+    };
+
 
     return (
         <div className="p-6 bg-gray-50 min-h-screen">
 
-            <h2 className="text-2xl font-bold mb-4">
-                جميع الفواتير
+            <h2 className="text-2xl font-bold mb-6">
+                تقرير الفواتير
             </h2>
 
-            {/* احصائيات */}
-            <div className="bg-white p-4 rounded-xl shadow mb-6">
-                <p className="font-semibold">
-                    إجمالي عدد الفواتير: {invoices.length}
-                </p>
-                <p className="text-blue-600 font-bold">
-                    إجمالي المبيعات: {totalSales} جنيه
-                </p>
-            </div>
+            {/* الفلاتر */}
+            <div className="bg-white p-4 rounded-xl shadow mb-6 grid md:grid-cols-3 gap-4">
 
-            {/* بحث */}
-            <input
-                type="text"
-                placeholder="بحث برقم الفاتورة..."
-                className="mb-6 p-2 border rounded w-full"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-            />
+                <input
+                    type="text"
+                    placeholder="بحث برقم أو اسم العميل"
+                    className="p-2 border rounded"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
+
+                <input
+                    type="date"
+                    className="p-2 border rounded"
+                    value={fromDate}
+                    onChange={(e) => setFromDate(e.target.value)}
+                />
+
+                <input
+                    type="date"
+                    className="p-2 border rounded"
+                    value={toDate}
+                    onChange={(e) => setToDate(e.target.value)}
+                />
+
+            </div>
 
             {/* عرض الفواتير */}
             <div className="space-y-4">
 
                 {filteredInvoices.length === 0 && (
-                    <p className="text-gray-500">
-                        لا توجد فواتير
-                    </p>
+                    <p className="text-gray-500">لا توجد بيانات</p>
                 )}
 
-                {filteredInvoices.map((invoice) => (
+                {filteredInvoices.map((invoice) => {
 
-                    <div
-                        key={invoice.id}
-                        className="bg-white p-4 rounded-xl shadow"
-                    >
+                    const data = getInvoiceData(invoice);
 
-                        <div className="flex justify-between items-center mb-2">
-                            <div>
-                                <p className="font-bold">
-                                    فاتورة رقم: {invoice.id}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                    {invoice.date}
-                                </p>
-                            </div>
+                    return (
+                        <div
+                            key={invoice.id}
+                            className="bg-white p-4 rounded-xl shadow"
+                        >
 
-                            <button
-                                onClick={() => deleteInvoice(invoice.id)}
-                                className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                            >
-                                حذف
-                            </button>
-                        </div>
+                            <div className="flex justify-between items-center mb-2">
 
-                        <div className="border-t pt-2 space-y-1">
+                                <div>
+                                    <p className="font-bold">
+                                        فاتورة رقم: {invoice.id}
+                                    </p>
 
-                            {invoice.items.map((item, index) => (
-                                <div
-                                    key={index}
-                                    className="flex justify-between text-sm"
-                                >
-                                    <span>
-                                        {item.name} × {item.quantity}
-                                    </span>
-                                    <span>
-                                        {item.sellPrice * item.quantity} جنيه
+                                    <p className="text-sm text-gray-500">
+                                        {invoice.customerName || "عميل نقدي"}
+                                    </p>
+
+                                    <p className="text-sm text-gray-400">
+                                        {new Date(invoice.date).toLocaleString("ar-EG")}
+                                    </p>
+
+                                    <span className={`text-xs px-2 py-1 rounded ${data.statusColor}`}>
+                                        {data.status}
                                     </span>
                                 </div>
-                            ))}
+
+                                <div className="flex gap-2">
+
+                                    <button
+                                        onClick={() => printSingleInvoice(invoice)}
+                                        className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                                    >
+                                        طباعة
+                                    </button>
+
+                                    <button
+                                        onClick={() => deleteInvoice(invoice.id)}
+                                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                                    >
+                                        حذف
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                            <div className="border-t pt-2 space-y-1 text-sm">
+
+                                {invoice.items.map((item, index) => (
+                                    <div key={index} className="flex justify-between">
+                                        <span>
+                                            {item.name} × {item.quantity}
+                                        </span>
+                                        <span>
+                                            {item.sellPrice * item.quantity} ج
+                                        </span>
+                                    </div>
+                                ))}
+
+                            </div>
+
+                            <div className="border-t mt-2 pt-2 text-sm space-y-1">
+
+                                <div>إجمالي الفاتورة: {invoice.total} ج</div>
+                                <div>الرصيد السابق: {data.previousBalance} ج</div>
+                                <div>المحصل: {data.collected} ج</div>
+                                <div className="font-bold text-red-600">
+                                    المتبقي: {data.remaining} ج
+                                </div>
+
+                            </div>
 
                         </div>
-
-                        <div className="border-t mt-2 pt-2 text-right font-bold text-blue-600">
-                            الإجمالي: {invoice.total} جنيه
-                        </div>
-
-                    </div>
-                ))}
+                    );
+                })}
 
             </div>
 

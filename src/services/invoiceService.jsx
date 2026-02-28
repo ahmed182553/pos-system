@@ -13,6 +13,7 @@ export const addInvoice = (invoice) => {
         items: invoice.items,
         total: invoice.total,
         date: new Date().toISOString(),
+        previousBalance,
     };
 
     localStorage.setItem(

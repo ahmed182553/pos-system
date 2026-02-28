@@ -66,10 +66,6 @@ export const getInvoices = () => {
     return JSON.parse(localStorage.getItem("invoices")) || [];
 };
 
-export const saveInvoices = (invoices) => {
-    localStorage.setItem("invoices", JSON.stringify(invoices));
-};
-
 export const deleteInvoice = (id) => {
     const invoices = getInvoices().filter(inv => inv.id !== id);
     localStorage.setItem("invoices", JSON.stringify(invoices));

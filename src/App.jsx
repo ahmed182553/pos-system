@@ -9,6 +9,7 @@ import Customers from "./pages/Customers";
 import AllInvoices from "./pages/AllInvoices";
 import { initializeProducts } from "./data/Productsdata";
 import Statement from "./pages/Statement";
+import Reports from "./pages/Reports";
 
 export default function App() {
 
@@ -86,6 +87,7 @@ export default function App() {
               <Route path="/customers" element={<Customers />} />
               <Route path="/allinvoices" element={<AllInvoices />} />
               <Route path="/statment" element={<Statement />} />
+              <Route path="/reports" element={<Reports />} />
             </Routes>
           </div>
 

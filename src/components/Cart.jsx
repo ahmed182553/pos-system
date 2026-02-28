@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export default function Cart({
     cart,
@@ -18,41 +18,70 @@ export default function Cart({
     const invoiceNumber = "فاتورة-" + Date.now();
     const date = new Date().toLocaleString();
 
-
-
     const currentCustomer = customers.find(
         c => c.id === Number(selectedCustomer)
     );
 
-    // تسجيل دفعة
-    const handleRegisterPayment = () => {
-        if (!selectedCustomer || !paymentAmount) return;
+    // 🧮 حساب الرصيد السابق الحقيقي
+    const allInvoices = JSON.parse(localStorage.getItem("invoices")) || [];
+    const payments = JSON.parse(localStorage.getItem("payments")) || [];
 
-        const payment = Number(paymentAmount);
+    let previousBalance = 0;
 
-        if (payment <= 0) return;
+    if (currentCustomer) {
 
-        if (payment > selectedCustomer.totalDebt) {
-            alert("المبلغ أكبر من إجمالي الدين");
-            return;
-        }
+        const openingBalance = Number(currentCustomer.previousBalance || 0);
 
-        updateCustomerBalance(selectedCustomer.id, -payment);
+        const customerInvoices = allInvoices.filter(
+            inv => inv.customerId === selectedCustomer
+        );
 
-        setCustomers(getCustomers());
-        setPaymentAmount("");
-        alert("تم تسجيل الدفعة بنجاح");
-    };
+        const totalInvoices = customerInvoices.reduce(
+            (sum, inv) => sum + inv.total,
+            0
+        );
 
-    // 🔥 إتمام البيع
+        const customerPayments = payments.filter(
+            p => p.customerId === selectedCustomer
+        );
+
+        const totalPayments = customerPayments.reduce(
+            (sum, p) => sum + p.amount,
+            0
+        );
+
+        previousBalance = openingBalance + totalInvoices - totalPayments;
+    }
+
+    const payment = Number(paymentAmount) || 0;
+
+    const totalDue = previousBalance + totalAmount;
+
+    const remaining = totalDue - payment;
+
+    // 🔥 إتمام البيع + حفظ الدفعة
     const handleCompleteSale = () => {
+
         if (cart.length === 0) {
             alert("السلة فارغة");
             return;
         }
 
-        const savedProducts = JSON.parse(localStorage.getItem("products")) || [];
+        if (!selectedCustomer) {
+            alert("اختر عميل أولاً");
+            return;
+        }
 
+        if (payment > totalDue) {
+            alert("المبلغ أكبر من إجمالي المستحق");
+            return;
+        }
+
+        const savedProducts = JSON.parse(localStorage.getItem("products")) || [];
+        const allInvoices = JSON.parse(localStorage.getItem("invoices")) || [];
+        const allPayments = JSON.parse(localStorage.getItem("payments")) || [];
+
+        // 1️⃣ خصم المخزون
         const updatedProducts = savedProducts.map(product => {
             const cartItem = cart.find(item => item.id === product.id);
             if (cartItem) {
@@ -66,36 +95,47 @@ export default function Cart({
 
         localStorage.setItem("products", JSON.stringify(updatedProducts));
 
-        // إضافة دين لو آجل
-        if (paymentType === "credit" && selectedCustomer) {
-            updateCustomerBalance(
-                Number(selectedCustomer),
-                totalAmount
-            );
-        }
-
-        // ✅ حفظ الفاتورة
-        const invoices = JSON.parse(localStorage.getItem("invoices")) || [];
-
+        // 2️⃣ إنشاء الفاتورة
         const newInvoice = {
             id: Date.now(),
-            invoiceNumber,
-            date,
-            customer: selectedCustomer ? selectedCustomer.name : "عميل نقدي",
+            customerId: selectedCustomer,
+            customerName: currentCustomer?.name || "",
+            date: new Date().toISOString(),
             items: cart,
             total: totalAmount,
-            paymentType
+            status: remaining <= 0 ? "paid" : "partial"
         };
 
         localStorage.setItem(
             "invoices",
-            JSON.stringify([...invoices, newInvoice])
+            JSON.stringify([...allInvoices, newInvoice])
         );
 
-        // ✅ تصفير السلة
+        // 3️⃣ حفظ الدفعة لو موجودة
+        if (payment > 0) {
+
+            const newPayment = {
+                id: Date.now() + 1,
+                invoiceId: newInvoice.id,
+                customerId: selectedCustomer,
+                amount: payment,
+                date: new Date().toISOString()
+            };
+
+            localStorage.setItem(
+                "payments",
+                JSON.stringify([...allPayments, newPayment])
+            );
+        }
+
+        // 4️⃣ تفريغ السلة
         localStorage.removeItem("cart");
 
         handleCheckout();
+
+        alert("تم حفظ الفاتورة بنجاح ✅");
+
+        window.dispatchEvent(new Event("productsUpdated"));
     };
 
     return (
@@ -119,7 +159,6 @@ export default function Cart({
                     className="w-full p-2 border rounded"
                 >
                     <option value="">اختر عميل</option>
-
                     {customers.map(c => (
                         <option key={c.id} value={c.id}>
                             {c.name}
@@ -128,42 +167,34 @@ export default function Cart({
                 </select>
             </div>
 
+            {/* بيانات العميل */}
             {currentCustomer && (
                 <div className="text-xs mb-2 border-b border-dashed pb-2">
                     <p>اسم العميل: {currentCustomer.name}</p>
-                    <p>الرصيد السابق: {currentCustomer.totalDebt} جنيه</p>
+                    {previousBalance > 0 && (
+                        <p>الرصيد السابق: {previousBalance} جنيه</p>
+                    )}
                 </div>
             )}
 
-            {/* تسجيل دفعة */}
-            {selectedCustomer && selectedCustomer.totalDebt > 0 && (
-                <div className="mb-3 print:hidden">
-                    <input
-                        type="number"
-                        placeholder="ادخل قيمة الدفعة"
-                        value={paymentAmount}
-                        onChange={(e) => setPaymentAmount(e.target.value)}
-                        className="w-full border p-2 rounded mb-2"
-                    />
-                    <button
-                        onClick={handleRegisterPayment}
-                        className="w-full bg-yellow-500 text-white py-2 rounded-lg"
-                    >
-                        تسجيل دفعة
-                    </button>
-                </div>
-            )}
-
-            {/* نوع الدفع */}
+            {/* الدفع */}
             <div className="mb-3 print:hidden">
                 <select
-                    className="w-full border p-2 rounded"
+                    className="w-full border p-2 rounded mb-2"
                     value={paymentType}
                     onChange={(e) => setPaymentType(e.target.value)}
                 >
                     <option value="cash">نقدي</option>
                     <option value="credit">آجل</option>
                 </select>
+
+                <input
+                    type="number"
+                    placeholder="قيمة الدفعة"
+                    value={paymentAmount}
+                    onChange={(e) => setPaymentAmount(e.target.value)}
+                    className="w-full border p-2 rounded"
+                />
             </div>
 
             {/* المنتجات */}
@@ -176,13 +207,39 @@ export default function Cart({
                 ))}
             </div>
 
-            {/* الإجمالي */}
-            <div className="flex justify-between font-bold text-sm mb-3">
-                <span>الإجمالي</span>
-                <span>{totalAmount} جنيه</span>
+            {/* الحسابات */}
+            <div className="text-sm space-y-1 mb-3">
+
+                {previousBalance > 0 && (
+                    <div className="flex justify-between text-gray-600">
+                        <span>الرصيد السابق</span>
+                        <span>{previousBalance} جنيه</span>
+                    </div>
+                )}
+
+                <div className="flex justify-between font-bold">
+                    <span>إجمالي الفاتورة</span>
+                    <span>{totalAmount} جنيه</span>
+                </div>
+
+                <div className="flex justify-between">
+                    <span>إجمالي المستحق</span>
+                    <span>{totalDue} جنيه</span>
+                </div>
+
+                <div className="flex justify-between text-green-600">
+                    <span>المدفوع</span>
+                    <span>{payment} جنيه</span>
+                </div>
+
+                <div className="flex justify-between text-red-600 font-bold">
+                    <span>المتبقي</span>
+                    <span>{remaining > 0 ? remaining : 0} جنيه</span>
+                </div>
+
             </div>
 
-            {/* أزرار */}
+            {/* الأزرار */}
             <div className="mt-4 print:hidden">
                 <button
                     onClick={handleCompleteSale}
@@ -198,6 +255,7 @@ export default function Cart({
                     طباعة الفاتورة
                 </button>
             </div>
+
         </div>
     );
 }
