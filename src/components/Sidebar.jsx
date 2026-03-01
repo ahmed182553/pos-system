@@ -1,24 +1,36 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { LogOut } from "lucide-react";
 
-export default function Sidebar(closeSidebar) {
+export default function Sidebar({ closeSidebar }) {
 
     const linkClass = ({ isActive }) =>
-        `p-2 rounded cursor-pointer block transition ${isActive
-            ? "bg-blue-600"
+        `p-3 rounded-lg transition flex items-center ${isActive
+            ? "bg-blue-600 shadow-md"
             : "hover:bg-blue-700"
         }`;
 
-    return (
-        <div className="w-64 bg-blue-900 text-white min-h-screen p-4">
+    const { logout } = useAuth();
+    const navigate = useNavigate();
 
-            <h2 className="text-xl font-bold mb-6">
+    const handleLogout = () => {
+        logout();
+        navigate("/login", { replace: true });
+    };
+
+    return (
+        <div className="w-64 bg-blue-900 text-white min-h-screen p-5 flex flex-col">
+
+            {/* Header */}
+            <h2 className="text-2xl font-bold mb-8 tracking-wide">
                 POS System
             </h2>
 
-            <ul className="space-y-3">
+            {/* Links */}
+            <ul className="space-y-3 flex-1">
 
                 <li>
-                    <NavLink to="/" className={linkClass} onClick={closeSidebar}>
+                    <NavLink to="/dashboard" className={linkClass} onClick={closeSidebar}>
                         Dashboard
                     </NavLink>
                 </li>
@@ -52,13 +64,31 @@ export default function Sidebar(closeSidebar) {
                         كشف الحسابات
                     </NavLink>
                 </li>
-                
+
                 <li>
                     <NavLink to="/reports" className={linkClass} onClick={closeSidebar}>
                         التقارير والجرد
                     </NavLink>
                 </li>
+
+                <li>
+                    <NavLink to="/dailypayments" className={linkClass} onClick={closeSidebar}>
+                        التحصيل
+                    </NavLink>
+                </li>
+
             </ul>
+
+            {/* Logout Button */}
+            <div className="pt-6 border-t border-blue-700">
+                <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 active:scale-95 transition-all duration-200 p-3 rounded-xl font-semibold shadow-lg"
+                >
+                    <LogOut size={18} />
+                    تسجيل الخروج
+                </button>
+            </div>
 
         </div>
     );

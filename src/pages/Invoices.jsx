@@ -204,14 +204,8 @@ export default function Invoices() {
             previousBalance: previousBalance
         };
 
-        const updatedInvoices = [...allInvoices, newInvoice];
-
-        localStorage.setItem("invoices", JSON.stringify(updatedInvoices));
-
-        // 3️⃣ تحديث المنتجات
         window.dispatchEvent(new Event("productsUpdated"));
 
-        // 4️⃣ تفريغ السلة
         setCart([]);
         setSelectedCustomer("");
         localStorage.removeItem("cart");

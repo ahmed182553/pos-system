@@ -12,19 +12,11 @@ export default function Statement() {
         c => c.id === Number(selectedCustomerId)
     );
 
-    const handlePrint = useReactToPrint({
-        contentRef: printRef,
-        documentTitle: "كشف حساب",
-        pageStyle: `
-        @page {
-          size: 80mm auto;
-          margin: 0;
-        }
-        body {
-          -webkit-print-color-adjust: exact;
-        }
-      `
-    });
+    // ✅ تصحيح الطباعة
+    const handlePrint = () => {
+        if (!printRef.current) return;
+        window.print();
+    };
 
     useEffect(() => {
         setCustomers(getCustomers());
@@ -65,7 +57,7 @@ export default function Statement() {
                 credit: pay.amount
             }));
 
-        // ✅ إضافة الرصيد السابق كأول معاملة
+        // ✅ الرصيد السابق
         const openingTransaction =
             previousBalance !== 0
                 ? [{
@@ -86,10 +78,8 @@ export default function Statement() {
         let balance = 0;
 
         const withBalance = allTransactions.map(t => {
-
             balance += t.debit;
             balance -= t.credit;
-
             return { ...t, balance };
         });
 
@@ -126,7 +116,7 @@ export default function Statement() {
 
             {selectedCustomerId && (
                 <button
-                    onClick={handlePrint}
+                    onClick={() => handlePrint(printRef.current)}
                     className="no-print mb-4 bg-blue-600 text-white px-4 py-2 rounded-lg"
                 >
                     طباعة كشف الحساب
@@ -140,11 +130,15 @@ export default function Statement() {
                 >
 
                     <div className="text-center mb-6">
-                        <h2 className="text-xl font-bold">
+                        <h2 className="text-lg font-bold">
                             كشف حساب عميل
                         </h2>
                         <p className="mt-2">
                             اسم العميل: {selectedCustomer?.name}
+                        </p>
+                        <p>
+                            الرصيد السابق:{" "}
+                            {(selectedCustomer?.previousBalance || 0).toLocaleString("ar-EG")} جنيه
                         </p>
                         <p>
                             تاريخ الطباعة:{" "}
@@ -152,7 +146,7 @@ export default function Statement() {
                         </p>
                     </div>
 
-                    <table className="w-full text-right text-[11px] border-collapse">
+                    <table className="w-full text-right text-[10px] border-collapse">
                         <thead>
                             <tr className="border-b font-bold bg-gray-100">
                                 <th className="p-2">التاريخ</th>
@@ -169,21 +163,25 @@ export default function Statement() {
                                     <td className="p-2">{t.date}</td>
                                     <td className="p-2">{t.description}</td>
                                     <td className="p-2">
-                                        {t.debit || "-"}
+                                        {t.debit
+                                            ? t.debit.toLocaleString("ar-EG")
+                                            : "-"}
                                     </td>
                                     <td className="p-2">
-                                        {t.credit || "-"}
+                                        {t.credit
+                                            ? t.credit.toLocaleString("ar-EG")
+                                            : "-"}
                                     </td>
 
                                     <td
                                         className={`p-2 font-bold ${t.balance > 0
-                                                ? "text-red-600"
-                                                : t.balance < 0
-                                                    ? "text-green-600"
-                                                    : ""
+                                            ? "text-red-600"
+                                            : t.balance < 0
+                                                ? "text-green-600"
+                                                : "text-gray-700"
                                             }`}
                                     >
-                                        {t.balance}
+                                        {t.balance.toLocaleString("ar-EG")}
                                     </td>
                                 </tr>
                             ))}
@@ -192,13 +190,14 @@ export default function Statement() {
 
                     <div
                         className={`mt-6 font-bold text-lg text-center ${finalBalance > 0
-                                ? "text-red-600"
-                                : finalBalance < 0
-                                    ? "text-green-600"
-                                    : ""
+                            ? "text-red-600"
+                            : finalBalance < 0
+                                ? "text-green-600"
+                                : "text-gray-700"
                             }`}
                     >
-                        الرصيد النهائي: {finalBalance} جنيه{" "}
+                        الرصيد النهائي:{" "}
+                        {finalBalance.toLocaleString("ar-EG")} جنيه{" "}
                         {finalBalance > 0
                             ? "(العميل عليه)"
                             : finalBalance < 0

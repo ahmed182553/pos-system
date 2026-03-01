@@ -138,8 +138,8 @@ export default function Reports() {
         growth > 0
             ? "text-green-600"
             : growth < 0
-                ? "text-red-600"
-                : "text-gray-500";
+            ? "text-red-600"
+            : "text-gray-500";
 
     const handlePrint = () => window.print();
 
@@ -293,10 +293,11 @@ export default function Reports() {
                                         {totalPaid} ج
                                     </td>
                                     <td
-                                        className={`p-2 font-bold ${remaining > 0
+                                        className={`p-2 font-bold ${
+                                            remaining > 0
                                                 ? "text-red-600"
                                                 : "text-green-600"
-                                            }`}
+                                        }`}
                                     >
                                         {remaining} ج
                                     </td>
@@ -315,14 +316,15 @@ function Card({ title, value, green, blue, customColor }) {
         <div className="bg-white p-6 rounded-2xl shadow">
             <p className="text-gray-500">{title}</p>
             <h3
-                className={`text-2xl font-bold mt-2 ${customColor
+                className={`text-2xl font-bold mt-2 ${
+                    customColor
                         ? customColor
                         : green
-                            ? "text-green-600"
-                            : blue
-                                ? "text-blue-600"
-                                : "text-black"
-                    }`}
+                        ? "text-green-600"
+                        : blue
+                        ? "text-blue-600"
+                        : "text-black"
+                }`}
             >
                 {value}
             </h3>

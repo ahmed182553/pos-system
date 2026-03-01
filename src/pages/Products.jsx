@@ -21,11 +21,9 @@ export default function Products({ addToCart }) {
         sellPrice: ""
     });
 
-    // تحميل المنتجات
     useEffect(() => {
         setProducts(getProducts());
 
-        // 🔥 يسمع لأي تحديث يحصل
         const handleUpdate = () => {
             setProducts(getProducts());
         };
@@ -34,7 +32,6 @@ export default function Products({ addToCart }) {
 
         return () =>
             window.removeEventListener("productsUpdated", handleUpdate);
-
     }, []);
 
     const resetForm = () => {
@@ -49,12 +46,7 @@ export default function Products({ addToCart }) {
     };
 
     const handleSaveProduct = () => {
-
-        if (
-            !newProduct.name ||
-            !newProduct.quantity ||
-            !newProduct.sellPrice
-        ) {
+        if (!newProduct.name || !newProduct.quantity || !newProduct.sellPrice) {
             alert("من فضلك أكمل البيانات المطلوبة");
             return;
         }
@@ -98,109 +90,103 @@ export default function Products({ addToCart }) {
     );
 
     return (
-        <div className="p-6 md:p-8 bg-gray-50 min-h-screen">
+        <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
 
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold">
                     إدارة المنتجات
                 </h2>
 
                 <button
                     onClick={() => setShowForm(!showForm)}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg"
+                    className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 transition text-white px-4 py-2 rounded-lg text-sm sm:text-base"
                 >
                     <Plus size={18} />
                     إضافة منتج
                 </button>
             </div>
 
+            {/* Search */}
             <input
                 type="text"
                 placeholder="بحث عن منتج..."
-                className="border px-3 py-2 rounded-lg w-full mb-6"
+                className="border px-3 py-2 rounded-lg w-full mb-6 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
             />
 
+            {/* Form */}
             {showForm && (
-                <div className="bg-white p-6 rounded-xl shadow-md mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <input
                         type="text"
                         placeholder="اسم المنتج"
-                        className="border p-2 rounded"
+                        className="border p-2 rounded text-sm"
                         value={newProduct.name}
                         onChange={(e) =>
-                            setNewProduct({
-                                ...newProduct,
-                                name: e.target.value
-                            })
+                            setNewProduct({ ...newProduct, name: e.target.value })
                         }
                     />
                     <input
                         type="number"
                         placeholder="الكمية"
-                        className="border p-2 rounded"
+                        className="border p-2 rounded text-sm"
                         value={newProduct.quantity}
                         onChange={(e) =>
-                            setNewProduct({
-                                ...newProduct,
-                                quantity: e.target.value
-                            })
+                            setNewProduct({ ...newProduct, quantity: e.target.value })
                         }
                     />
                     <input
                         type="number"
                         placeholder="سعر الشراء"
-                        className="border p-2 rounded"
+                        className="border p-2 rounded text-sm"
                         value={newProduct.buyPrice}
                         onChange={(e) =>
-                            setNewProduct({
-                                ...newProduct,
-                                buyPrice: e.target.value
-                            })
+                            setNewProduct({ ...newProduct, buyPrice: e.target.value })
                         }
                     />
                     <input
                         type="number"
                         placeholder="سعر البيع"
-                        className="border p-2 rounded"
+                        className="border p-2 rounded text-sm"
                         value={newProduct.sellPrice}
                         onChange={(e) =>
-                            setNewProduct({
-                                ...newProduct,
-                                sellPrice: e.target.value
-                            })
+                            setNewProduct({ ...newProduct, sellPrice: e.target.value })
                         }
                     />
 
                     <button
                         onClick={handleSaveProduct}
-                        className="col-span-full bg-green-600 text-white py-2 rounded-lg"
+                        className="col-span-full bg-green-600 hover:bg-green-700 transition text-white py-2 rounded-lg text-sm sm:text-base"
                     >
                         {editingId ? "تعديل المنتج" : "حفظ المنتج"}
                     </button>
                 </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {/* Products Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
                 {filteredProducts.map((product) => (
                     <div
                         key={product.id}
-                        className="bg-white rounded-2xl shadow-md p-5 flex flex-col justify-between"
+                        className="bg-white rounded-2xl shadow-md p-4 sm:p-5 flex flex-col justify-between hover:shadow-lg transition"
                     >
                         <div>
-                            <h3 className="font-bold mb-2">
+                            <h3 className="font-bold text-sm sm:text-base truncate">
                                 {product.name}
                             </h3>
 
-                            <p className={`text-sm ${product.quantity < 5
-                                ? "text-red-500 font-semibold"
-                                : "text-gray-500"
-                                }`}>
+                            <p
+                                className={`text-xs sm:text-sm mt-1 ${product.quantity < 5
+                                        ? "text-red-500 font-semibold"
+                                        : "text-gray-500"
+                                    }`}
+                            >
                                 المخزون: {product.quantity}
                             </p>
 
-                            <p className="text-blue-600 font-bold mt-2">
+                            <p className="text-blue-600 font-bold mt-2 text-sm sm:text-base">
                                 {product.sellPrice} جنيه
                             </p>
                         </div>
@@ -209,7 +195,7 @@ export default function Products({ addToCart }) {
 
                             <button
                                 onClick={() => addToCart && addToCart(product)}
-                                className="bg-green-600 text-white py-2 rounded-xl"
+                                className="bg-green-600 hover:bg-green-700 transition text-white py-2 rounded-xl text-sm"
                             >
                                 <ShoppingCart size={16} className="inline mr-1" />
                                 إضافة للسلة
@@ -218,14 +204,14 @@ export default function Products({ addToCart }) {
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => handleEdit(product)}
-                                    className="flex-1 bg-yellow-500 text-white py-2 rounded-xl"
+                                    className="flex-1 bg-yellow-500 hover:bg-yellow-600 transition text-white py-2 rounded-xl text-sm"
                                 >
                                     تعديل
                                 </button>
 
                                 <button
                                     onClick={() => handleDelete(product.id)}
-                                    className="flex-1 bg-red-500 text-white py-2 rounded-xl"
+                                    className="flex-1 bg-red-500 hover:bg-red-600 transition text-white py-2 rounded-xl text-sm"
                                 >
                                     حذف
                                 </button>

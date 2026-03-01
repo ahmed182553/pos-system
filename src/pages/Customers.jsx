@@ -81,20 +81,20 @@ export default function Customers() {
     };
 
     return (
-        <div className="p-6">
+        <div className="p-3 sm:p-6 bg-gray-50 min-h-screen">
 
-            <h2 className="text-2xl font-bold mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">
                 إدارة العملاء
             </h2>
 
             {/* نموذج إضافة عميل */}
-            <div className="bg-white p-6 rounded-xl shadow mb-6">
-                <div className="grid md:grid-cols-4 gap-4">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
 
                     <input
                         type="text"
                         placeholder="اسم العميل"
-                        className="p-2 border rounded"
+                        className="p-2 border rounded text-sm sm:text-base"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                     />
@@ -102,7 +102,7 @@ export default function Customers() {
                     <input
                         type="text"
                         placeholder="رقم الهاتف"
-                        className="p-2 border rounded"
+                        className="p-2 border rounded text-sm sm:text-base"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                     />
@@ -110,14 +110,14 @@ export default function Customers() {
                     <input
                         type="number"
                         placeholder="رصيد سابق"
-                        className="p-2 border rounded"
+                        className="p-2 border rounded text-sm sm:text-base"
                         value={previousBalance}
                         onChange={(e) => setPreviousBalance(e.target.value)}
                     />
 
                     <button
                         onClick={handleSubmit}
-                        className="bg-blue-600 text-white rounded p-2"
+                        className="bg-blue-600 hover:bg-blue-700 text-white rounded p-2 text-sm sm:text-base w-full"
                     >
                         {editingId ? "تحديث" : "إضافة"}
                     </button>
@@ -125,111 +125,116 @@ export default function Customers() {
                 </div>
             </div>
 
-            {/* جدول العملاء */}
-            <div className="bg-white p-6 rounded-xl shadow overflow-x-auto">
+            {/* عرض العملاء */}
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow">
 
                 {customers.length === 0 ? (
-                    <p className="text-gray-500">لا يوجد عملاء</p>
+                    <p className="text-gray-500 text-sm">لا يوجد عملاء</p>
                 ) : (
-                    <table className="w-full text-right">
-                        <thead>
-                            <tr className="border-b font-bold">
-                                <th className="py-2">#</th>
-                                <th>الاسم</th>
-                                <th>الهاتف</th>
-                                <th>الرصيد الحالي</th>
-                                <th>التحكم</th>
-                            </tr>
-                        </thead>
+                    <div className="space-y-4">
 
-                        <tbody>
-                            {customers.map((customer, i) => {
+                        {customers.map((customer, i) => {
 
-                                const balance = calculateCustomerBalance(customer.id);
+                            const balance = calculateCustomerBalance(customer.id);
 
-                                return (
-                                    <tr key={customer.id} className="border-b">
-                                        <td className="py-2">{i + 1}</td>
-                                        <td>{customer.name}</td>
-                                        <td>{customer.phone}</td>
-                                        <td className={
-                                            balance > 0
-                                                ? "text-red-600 font-bold"
-                                                : "text-green-600 font-bold"
-                                        }>
-                                            {balance} جنيه
-                                        </td>
+                            return (
+                                <div
+                                    key={customer.id}
+                                    className="border rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
+                                >
 
-                                        <td className="space-x-2">
+                                    {/* بيانات العميل */}
+                                    <div className="space-y-1 text-sm sm:text-base">
+                                        <div className="font-bold">
+                                            #{i + 1} - {customer.name}
+                                        </div>
 
-                                            <button
-                                                onClick={() => handleEdit(customer)}
-                                                className="bg-yellow-500 text-white px-3 py-1 rounded"
-                                            >
-                                                تعديل
-                                            </button>
+                                        <div className="text-gray-500">
+                                            📞 {customer.phone}
+                                        </div>
 
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedCustomer(customer);
-                                                    setShowPaymentModal(true);
-                                                }}
-                                                className="bg-green-600 text-white px-3 py-1 rounded"
-                                            >
-                                                تسجيل دفعة
-                                            </button>
+                                        <div
+                                            className={
+                                                balance > 0
+                                                    ? "text-red-600 font-bold"
+                                                    : "text-green-600 font-bold"
+                                            }
+                                        >
+                                            الرصيد: {balance} جنيه
+                                        </div>
+                                    </div>
 
-                                            <button
-                                                onClick={() => {
-                                                    deleteCustomer(customer.id);
-                                                    refresh();
-                                                }}
-                                                className="bg-red-600 text-white px-3 py-1 rounded"
-                                            >
-                                                حذف
-                                            </button>
+                                    {/* الأزرار */}
+                                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
 
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
+                                        <button
+                                            onClick={() => handleEdit(customer)}
+                                            className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded text-sm w-full sm:w-auto"
+                                        >
+                                            تعديل
+                                        </button>
 
-                    </table>
+                                        <button
+                                            onClick={() => {
+                                                setSelectedCustomer(customer);
+                                                setShowPaymentModal(true);
+                                            }}
+                                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm w-full sm:w-auto"
+                                        >
+                                            تسجيل دفعة
+                                        </button>
+
+                                        <button
+                                            onClick={() => {
+                                                deleteCustomer(customer.id);
+                                                refresh();
+                                            }}
+                                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm w-full sm:w-auto"
+                                        >
+                                            حذف
+                                        </button>
+
+                                    </div>
+
+                                </div>
+                            );
+                        })}
+
+                    </div>
                 )}
 
             </div>
 
             {/* مودال تسجيل دفعة */}
             {showPaymentModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
 
-                    <div className="bg-white p-6 rounded-xl w-96">
+                    <div className="bg-white p-5 sm:p-6 rounded-xl w-full max-w-md">
 
-                        <h3 className="text-lg font-bold mb-4">
+                        <h3 className="text-base sm:text-lg font-bold mb-4">
                             تسجيل دفعة - {selectedCustomer.name}
                         </h3>
 
                         <input
                             type="number"
                             placeholder="قيمة الدفعة"
-                            className="w-full p-2 border rounded mb-4"
+                            className="w-full p-2 border rounded mb-4 text-sm sm:text-base"
                             value={paymentAmount}
                             onChange={(e) => setPaymentAmount(e.target.value)}
                         />
 
-                        <div className="flex justify-end gap-2">
+                        <div className="flex flex-col sm:flex-row justify-end gap-2">
 
                             <button
                                 onClick={() => setShowPaymentModal(false)}
-                                className="bg-gray-400 text-white px-4 py-2 rounded"
+                                className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded text-sm w-full sm:w-auto"
                             >
                                 إلغاء
                             </button>
 
                             <button
                                 onClick={handlePayment}
-                                className="bg-green-600 text-white px-4 py-2 rounded"
+                                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm w-full sm:w-auto"
                             >
                                 حفظ
                             </button>

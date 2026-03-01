@@ -1,5 +1,8 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+
 import Sidebar from "./components/Sidebar";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -7,12 +10,21 @@ import Products from "./pages/Products";
 import Invoices from "./pages/Invoices";
 import Customers from "./pages/Customers";
 import AllInvoices from "./pages/AllInvoices";
-import { initializeProducts } from "./data/Productsdata";
 import Statement from "./pages/Statement";
 import Reports from "./pages/Reports";
+import DailyPayments from "./pages/DailyPayments";
+import { initializeProducts } from "./data/Productsdata";
 
 export default function App() {
+  return (
+    <AuthProvider>
+      <MainApp />
+    </AuthProvider>
+  );
+}
 
+function MainApp() {
+  const { isAuth } = useAuth();
   const [cart, setCart] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -21,8 +33,8 @@ export default function App() {
   }, []);
 
   const addToCart = (product) => {
-    setCart(prev => {
-      const existing = prev.find(item => item.id === product.id);
+    setCart((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
 
       if (existing) {
         if (existing.quantity >= product.quantity) {
@@ -30,7 +42,7 @@ export default function App() {
           return prev;
         }
 
-        return prev.map(item =>
+        return prev.map((item) =>
           item.id === product.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
@@ -43,56 +55,143 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div className="flex min-h-screen bg-gray-100 overflow-x-hidden">
+      {/* 🔥 شيلنا bg-gray-100 من هنا */}
+      <div className="flex min-h-screen overflow-x-hidden">
 
-        <div
-          className={`
-            fixed inset-y-0 right-0 z-50 w-64 bg-blue-900 text-white transform
-            ${isOpen ? "translate-x-0" : "translate-x-full"}
-            transition-transform duration-300
-            lg:static lg:translate-x-0
-          `}
-        >
-          <Sidebar closeSidebar={() => setIsOpen(false)} />
-        </div>
-
-        {isOpen && (
+        {/* Sidebar */}
+        {isAuth && (
           <div
-            className="fixed inset-0 bg-black/40 z-40 lg:hidden"
-            onClick={() => setIsOpen(false)}
-          />
+            className={`
+              fixed inset-y-0 right-0 z-50 w-64 bg-blue-900 text-white transform
+              ${isOpen ? "translate-x-0" : "translate-x-full"}
+              transition-transform duration-300
+              lg:static lg:translate-x-0
+            `}
+          >
+            <Sidebar closeSidebar={() => setIsOpen(false)} />
+          </div>
         )}
 
-        <div className="flex-1 min-w-0 flex flex-col">
+        <div className="flex-1 flex flex-col">
 
-          <div className="lg:hidden bg-white shadow p-4 flex items-center justify-between">
-            <button
-              onClick={() => setIsOpen(true)}
-              className="text-blue-900 text-2xl"
-            >
-              ☰
-            </button>
+          {/* Mobile Header */}
+          {isAuth && (
+            <div className="lg:hidden bg-white shadow p-4 flex justify-between">
+              <button
+                onClick={() => setIsOpen(true)}
+                className="text-blue-900 text-2xl"
+              >
+                ☰
+              </button>
+              <h1 className="font-bold text-blue-900">POS System</h1>
+            </div>
+          )}
 
-            <h1 className="font-bold text-blue-900">
-              POS System
-            </h1>
-          </div>
+          {/* 🔥 الخلفية الرمادي بس بعد اللوجين */}
+          <div className={`flex-1 p-4 ${isAuth ? "bg-gray-100" : ""}`}>
 
-          <div className="flex-1 p-4 md:p-6">
             <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/products" element={<Products addToCart={addToCart} />} />
-              <Route path="/invoices" element={<Invoices cart={cart} setCart={setCart} />} />
-              <Route path="/customers" element={<Customers />} />
-              <Route path="/allinvoices" element={<AllInvoices />} />
-              <Route path="/statment" element={<Statement />} />
-              <Route path="/reports" element={<Reports />} />
+
+              {/* Root */}
+              <Route
+                path="/"
+                element={
+                  isAuth
+                    ? <Navigate to="/dashboard" replace />
+                    : <Navigate to="/login" replace />
+                }
+              />
+
+              {/* Login */}
+              <Route
+                path="/login"
+                element={
+                  !isAuth
+                    ? <Login />
+                    : <Navigate to="/dashboard" replace />
+                }
+              />
+
+              {/* Protected Routes */}
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/products"
+                element={
+                  <ProtectedRoute>
+                    <Products addToCart={addToCart} />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/invoices"
+                element={
+                  <ProtectedRoute>
+                    <Invoices cart={cart} setCart={setCart} />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/customers"
+                element={
+                  <ProtectedRoute>
+                    <Customers />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/allinvoices"
+                element={
+                  <ProtectedRoute>
+                    <AllInvoices />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/statment"
+                element={
+                  <ProtectedRoute>
+                    <Statement />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/reports"
+                element={
+                  <ProtectedRoute>
+                    <Reports />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/dailypayments"
+                element={
+                  <ProtectedRoute>
+                    <DailyPayments />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Catch All */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+
             </Routes>
+
           </div>
-
         </div>
-
       </div>
     </BrowserRouter>
   );

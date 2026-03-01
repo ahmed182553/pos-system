@@ -215,33 +215,33 @@ export default function AllInvoices() {
 
 
     return (
-        <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="p-3 sm:p-6 bg-gray-50 min-h-screen">
 
-            <h2 className="text-2xl font-bold mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">
                 تقرير الفواتير
             </h2>
 
             {/* الفلاتر */}
-            <div className="bg-white p-4 rounded-xl shadow mb-6 grid md:grid-cols-3 gap-4">
+            <div className="bg-white p-3 sm:p-4 rounded-xl shadow mb-4 sm:mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
 
                 <input
                     type="text"
                     placeholder="بحث برقم أو اسم العميل"
-                    className="p-2 border rounded"
+                    className="p-2 border rounded text-sm sm:text-base"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                 />
 
                 <input
                     type="date"
-                    className="p-2 border rounded"
+                    className="p-2 border rounded text-sm sm:text-base"
                     value={fromDate}
                     onChange={(e) => setFromDate(e.target.value)}
                 />
 
                 <input
                     type="date"
-                    className="p-2 border rounded"
+                    className="p-2 border rounded text-sm sm:text-base"
                     value={toDate}
                     onChange={(e) => setToDate(e.target.value)}
                 />
@@ -249,10 +249,10 @@ export default function AllInvoices() {
             </div>
 
             {/* عرض الفواتير */}
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
 
                 {filteredInvoices.length === 0 && (
-                    <p className="text-gray-500">لا توجد بيانات</p>
+                    <p className="text-gray-500 text-sm">لا توجد بيانات</p>
                 )}
 
                 {filteredInvoices.map((invoice) => {
@@ -262,41 +262,45 @@ export default function AllInvoices() {
                     return (
                         <div
                             key={invoice.id}
-                            className="bg-white p-4 rounded-xl shadow"
+                            className="bg-white p-3 sm:p-4 rounded-xl shadow"
                         >
 
-                            <div className="flex justify-between items-center mb-2">
+                            {/* Header */}
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-3">
 
-                                <div>
-                                    <p className="font-bold">
+                                <div className="space-y-1">
+
+                                    <p className="font-bold text-sm sm:text-base">
                                         فاتورة رقم: {invoice.id}
                                     </p>
 
-                                    <p className="text-sm text-gray-500">
+                                    <p className="text-xs sm:text-sm text-gray-500">
                                         {invoice.customerName || "عميل نقدي"}
                                     </p>
 
-                                    <p className="text-sm text-gray-400">
+                                    <p className="text-xs text-gray-400">
                                         {new Date(invoice.date).toLocaleString("ar-EG")}
                                     </p>
 
-                                    <span className={`text-xs px-2 py-1 rounded ${data.statusColor}`}>
+                                    <span className={`inline-block text-xs px-2 py-1 rounded ${data.statusColor}`}>
                                         {data.status}
                                     </span>
+
                                 </div>
 
-                                <div className="flex gap-2">
+                                {/* Buttons */}
+                                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
 
                                     <button
                                         onClick={() => printSingleInvoice(invoice)}
-                                        className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                                        className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 text-sm w-full sm:w-auto"
                                     >
                                         طباعة
                                     </button>
 
                                     <button
                                         onClick={() => deleteInvoice(invoice.id)}
-                                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                                        className="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600 text-sm w-full sm:w-auto"
                                     >
                                         حذف
                                     </button>
@@ -305,14 +309,18 @@ export default function AllInvoices() {
 
                             </div>
 
-                            <div className="border-t pt-2 space-y-1 text-sm">
+                            {/* Items */}
+                            <div className="border-t pt-2 space-y-1 text-xs sm:text-sm">
 
                                 {invoice.items.map((item, index) => (
-                                    <div key={index} className="flex justify-between">
-                                        <span>
+                                    <div
+                                        key={index}
+                                        className="flex justify-between gap-2"
+                                    >
+                                        <span className="truncate">
                                             {item.name} × {item.quantity}
                                         </span>
-                                        <span>
+                                        <span className="whitespace-nowrap">
                                             {item.sellPrice * item.quantity} ج
                                         </span>
                                     </div>
@@ -320,11 +328,13 @@ export default function AllInvoices() {
 
                             </div>
 
-                            <div className="border-t mt-2 pt-2 text-sm space-y-1">
+                            {/* Totals */}
+                            <div className="border-t mt-2 pt-2 text-xs sm:text-sm space-y-1">
 
                                 <div>إجمالي الفاتورة: {invoice.total} ج</div>
                                 <div>الرصيد السابق: {data.previousBalance} ج</div>
                                 <div>المحصل: {data.collected} ج</div>
+
                                 <div className="font-bold text-red-600">
                                     المتبقي: {data.remaining} ج
                                 </div>
