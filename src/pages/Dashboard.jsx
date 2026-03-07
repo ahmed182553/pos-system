@@ -243,15 +243,17 @@ export default function Dashboard() {
               </p>
             ) : (
               <div className="space-y-3">
-                {lowStockProducts.map(product => (
+                {lowStockProducts.map((product, index) => (
                   <div
-                    key={product.id}
+                    key={product.id + "-" + index}
                     className="flex justify-between items-center border rounded-xl p-3 text-sm"
                   >
                     <span>{product.name}</span>
+
                     <span className="text-red-600 font-bold">
                       {product.quantity}
                     </span>
+
                   </div>
                 ))}
               </div>

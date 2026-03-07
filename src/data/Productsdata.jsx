@@ -1,34 +1,27 @@
+const PRODUCTS_KEY = "products";
+
 const defaultProducts = [
     {
-        id: 1,
-        name: "توينكيز 5ج",
-        buyPrice: 755,
-        sellPrice: 795,
-        quantity: 10,
-    },
-    {
-        id: 2,
-        name: "هوهوز 5ج",
-        buyPrice: 755,
-        sellPrice: 795,
-        quantity: 10,
-    },
-    {
-        id: 3,
-        name: "هوهوز 10ج ",
-        buyPrice: 755,
-        sellPrice: 795,
+        id: crypto.randomUUID(),
+        name: "مولتو",
+        buyPrice: 281,
+        sellPrice: 300,
         quantity: 15,
     },
 ];
 
-// 🔥 نحط المنتجات في localStorage لو مفيش منتجات متخزنة
+// تشغيله مرة واحدة فقط لو مفيش منتجات
 export const initializeProducts = () => {
-    const existing = localStorage.getItem("products");
+    const existing = localStorage.getItem(PRODUCTS_KEY);
 
-    if (!existing) {
-        localStorage.setItem("products", JSON.stringify(defaultProducts));
+    if (!existing || JSON.parse(existing).length === 0) {
+        localStorage.setItem(PRODUCTS_KEY, JSON.stringify(defaultProducts));
     }
+};
+
+// جلب المنتجات
+export const getProducts = () => {
+    return JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
 };
 
 export default defaultProducts;

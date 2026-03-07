@@ -4,20 +4,24 @@ import { getProducts } from "../services/dataService";
 import { getCustomers } from "../services/customerService";
 import { addInvoice } from "../services/invoiceService";
 
-
 export default function Invoices() {
+
     const [customers, setCustomers] = useState([]);
     const [selectedCustomer, setSelectedCustomer] = useState("");
 
-    useEffect(() => {
-        setCustomers(getCustomers());
-    }, []);
     const [products, setProducts] = useState([]);
     const [cart, setCart] = useState([]);
     const [search, setSearch] = useState("");
 
+    const [discount, setDiscount] = useState(0);
+
+    useEffect(() => {
+        setCustomers(getCustomers());
+    }, []);
+
     // تحميل المنتجات والسلة
     useEffect(() => {
+
         setProducts(getProducts());
 
         const savedCart =
@@ -25,7 +29,6 @@ export default function Invoices() {
 
         setCart(savedCart);
 
-        // 👂 سماع تحديث المنتجات
         const handleProductsUpdate = () => {
             setProducts(getProducts());
         };
@@ -123,12 +126,16 @@ export default function Invoices() {
         setCart(cart.filter(item => item.id !== id));
     };
 
-    const totalAmount = cart.reduce(
+    // الإجمالي قبل الخصم
+    const subTotal = cart.reduce(
         (acc, item) => acc + item.sellPrice * item.quantity,
         0
     );
 
-    // 🔥🔥🔥 عملية الدفع + حفظ الفاتورة + خصم المخزون
+    // الإجمالي بعد الخصم
+    const totalAmount = subTotal - discount;
+
+    // عملية الدفع
     const handleCheckout = () => {
 
         if (cart.length === 0) {
@@ -176,7 +183,7 @@ export default function Invoices() {
             }
         });
 
-        // 1️⃣ خصم الكميات من المخزون
+        // خصم الكميات من المخزون
         const updatedProducts = products.map(product => {
 
             const cartItem = cart.find(item => item.id === product.id);
@@ -193,25 +200,22 @@ export default function Invoices() {
 
         localStorage.setItem("products", JSON.stringify(updatedProducts));
 
-        // 2️⃣ إنشاء الفاتورة كاملة بالرصيد السابق
-        const newInvoice = {
-            id: Date.now(),
-            customerId: selectedCustomer,
-            customerName: customer.name,
-            date: new Date().toISOString(),
-            items: cart,
-            total: totalAmount,
-            previousBalance: previousBalance
-        };
+        // إنشاء الفاتورة
+        
+
+        
 
         window.dispatchEvent(new Event("productsUpdated"));
 
         setCart([]);
         setSelectedCustomer("");
+        setDiscount(0);
+
         localStorage.removeItem("cart");
 
         alert("تمت عملية البيع وحفظ الفاتورة بنجاح ✅");
     };
+
     return (
         <div className="p-6 md:p-8 bg-gray-50 min-h-screen grid lg:grid-cols-2 gap-8">
 
@@ -219,7 +223,6 @@ export default function Invoices() {
                 <h2 className="text-xl font-bold mb-4">
                     المنتجات
                 </h2>
-
 
                 <input
                     type="text"
@@ -238,8 +241,9 @@ export default function Invoices() {
                             onClick={() => addToCart(product)}
                             className={`bg-white p-4 rounded-xl shadow cursor-pointer hover:shadow-lg transition 
                                 ${product.quantity < 5 ? "border border-red-400" : ""}
-                                `}
+                            `}
                         >
+
                             <h3 className="font-semibold">
                                 {product.name}
                             </h3>
@@ -258,6 +262,7 @@ export default function Invoices() {
                             </p>
 
                         </div>
+
                     ))}
 
                 </div>
@@ -266,6 +271,9 @@ export default function Invoices() {
             <Cart
                 cart={cart}
                 totalAmount={totalAmount}
+                subTotal={subTotal}
+                discount={discount}
+                setDiscount={setDiscount}
                 increaseQty={increaseQty}
                 decreaseQty={decreaseQty}
                 removeItem={removeItem}

@@ -85,7 +85,7 @@ export default function Products({ addToCart }) {
         setShowForm(true);
     };
 
-    const filteredProducts = products.filter(p =>
+    const filteredProducts = products.filter((p) =>
         p.name.toLowerCase().includes(search.toLowerCase())
     );
 
@@ -179,15 +179,11 @@ export default function Products({ addToCart }) {
 
                             <p
                                 className={`text-xs sm:text-sm mt-1 ${product.quantity < 5
-                                        ? "text-red-500 font-semibold"
-                                        : "text-gray-500"
+                                    ? "text-red-500 font-semibold"
+                                    : "text-gray-500"
                                     }`}
                             >
                                 المخزون: {product.quantity}
-                            </p>
-
-                            <p className="text-blue-600 font-bold mt-2 text-sm sm:text-base">
-                                {product.sellPrice} جنيه
                             </p>
                         </div>
 

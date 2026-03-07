@@ -5,15 +5,12 @@ export const getInvoices = () => {
 };
 
 export const addInvoice = (invoice) => {
+
     const invoices = getInvoices();
 
     const newInvoice = {
-        id: Date.now(),
-        customerId: invoice.customerId,
-        items: invoice.items,
-        total: invoice.total,
-        date: new Date().toISOString(),
-        previousBalance,
+        ...invoice,   // يأخذ كل البيانات القادمة من الفاتورة
+        id: Date.now()
     };
 
     localStorage.setItem(
