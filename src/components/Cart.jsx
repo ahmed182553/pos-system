@@ -145,14 +145,10 @@ export default function Cart({
         }
 
         localStorage.removeItem("cart");
-
-        // 🔥 الطباعة التلقائية
-        // تشغيل الطباعة تلقائياً
-
-        handleCheckout(); // تفريغ السلة
+        handleCheckout(); 
 
         setTimeout(() => {
-            window.print(); // الطباعة
+            window.print(); 
         }, 200);
 
         alert("تم حفظ الفاتورة بنجاح ✅");
