@@ -176,7 +176,7 @@ export default function Cart({
             <div className="text-center border-b border-dashed pb-2 mb-2">
 
                 <h1 className="text-lg font-bold">
-                    متجري
+                    ابو أنس
                 </h1>
 
                 <p>رقم الفاتورة: {invoiceNumber}</p>

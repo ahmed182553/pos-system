@@ -302,6 +302,13 @@ const defaultProducts = [
         sellPrice: 300,
         quantity: 15,
     },
+    {
+        id: crypto.randomUUID(),
+        name: "علبه توينكيز 5",
+        buyPrice: 70,
+        sellPrice: 100,
+        quantity: 15,
+    },
 ];
 
 // تشغيله مرة واحدة فقط لو مفيش منتجات
